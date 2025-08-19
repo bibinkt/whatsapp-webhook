@@ -161,6 +161,7 @@ async function processWebhookAsync(body) {
 async function forwardToN8N(data) {
   try {
     log('Forwarding to n8n:', N8N_WEBHOOK_URL);
+    log('Forwarding data:', data);
     
     const response = await axios.post(N8N_WEBHOOK_URL, data, {
       headers: {
