@@ -158,7 +158,7 @@ async function processWebhookAsync(body) {
 }
 
 // Forward data to n8n
-async function forwardToN8N(data) {
+async function forwardToN8N1(data) {
   try {
     log('Forwarding to n8n:', N8N_WEBHOOK_URL);
     log('Forwarding data:', data);
@@ -172,5 +172,30 @@ async function forwardToN8N(data) {
     
     // You could implement retry logic here
     // Or save to a queue for later processing
+  }
+}
+
+async function forwardToN8N(data) {
+  try {
+    log('Forwarding to n8n with fetch:', N8N_WEBHOOK_URL);
+    
+    // Use fetch which is native and lighter
+    fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    }).then(response => {
+      log('✅ n8n responded:', response.status);
+    }).catch(err => {
+      log('⚠️ n8n error (non-blocking):', err.message);
+    });
+    
+    // Don't wait for the response
+    return;
+    
+  } catch (error) {
+    log('Error in fetch setup:', error.message);
   }
 }
