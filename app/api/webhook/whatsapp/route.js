@@ -163,12 +163,7 @@ async function forwardToN8N(data) {
     log('Forwarding to n8n:', N8N_WEBHOOK_URL);
     log('Forwarding data:', data);
     
-    const response = await axios.post(N8N_WEBHOOK_URL, data, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      timeout: 5000, // 5 second timeout
-    });
+    const response = await axios.post(N8N_WEBHOOK_URL, data);
     
     log('✅ Successfully forwarded to n8n. Response:', response.status);
     
