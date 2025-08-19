@@ -86,6 +86,10 @@ export async function POST(request) {
 async function processWebhookAsync(body) {
   try {
     // Check if this is a WhatsApp message
+    if (body.object !== 'whatsapp_business_account') {
+      log('Not a WhatsApp business account webhook, ignoring');
+      return;
+    }
     
     // Extract message data
     let extractedData = {
@@ -95,8 +99,8 @@ async function processWebhookAsync(body) {
     };
     
     // Check for incoming messages
-    if (true) {
-      const change = body;
+    if (body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
+      const change = body.entry[0].changes[0];
       const message = change.value.messages[0];
       const contact = change.value.contacts?.[0];
       const metadata = change.value.metadata;
