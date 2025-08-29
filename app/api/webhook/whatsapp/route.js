@@ -57,8 +57,6 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    log('Received POST webhook:', JSON.stringify(body, null, 2));
-    
     // Immediately respond to WhatsApp to acknowledge receipt
     // This must happen within 5 seconds
     const response = NextResponse.json(
@@ -85,72 +83,22 @@ export async function POST(request) {
 // Process webhook asynchronously
 async function processWebhookAsync(body) {
   try {
+     log('Received POST webhook:', JSON.stringify(body, null, 2));
     // Check if this is a WhatsApp message
     if (body.object !== 'whatsapp_business_account') {
       log('Not a WhatsApp business account webhook, ignoring');
       return;
     }
     
-    // Extract message data
-    let extractedData = {
-      source: 'whatsapp',
-      timestamp: new Date().toISOString(),
-      raw: body
-    };
-    
     // Check for incoming messages
     if (body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
-      const change = body.entry[0].changes[0];
-      const message = change.value.messages[0];
-      const contact = change.value.contacts?.[0];
-      const metadata = change.value.metadata;
+       // Forward to n8n webhook
+      forwardToN8N(body);
+    } else if (body.entry?.[0]?.changes?.[0]?.value?.statuses?.[0]) {
       
-      extractedData = {
-        ...extractedData,
-        type: 'message',
-        message: {
-          id: message.id,
-          from: message.from,
-          timestamp: message.timestamp,
-          type: message.type,
-          text: message.text?.body || null,
-          profileName: contact?.profile?.name || null,
-        },
-        business: {
-          phoneNumberId: metadata?.phone_number_id,
-          displayPhoneNumber: metadata?.display_phone_number,
-        },
-        // Flag for n8n to know this needs processing
-        requiresProcessing: true,
-        isRecipeRequest: true // You can add logic to detect this
-      };
-      
-      log('📩 Message received from:', message.from, '- Text:', message.text?.body);
+      log('📊 Status update:', body.entry[0].changes[0].value.statuses[0]);
     }
-    
-    // Check for status updates (delivery reports)
-    else if (body.entry?.[0]?.changes?.[0]?.value?.statuses?.[0]) {
-      const status = body.entry[0].changes[0].value.statuses[0];
-      
-      extractedData = {
-        ...extractedData,
-        type: 'status',
-        status: {
-          id: status.id,
-          recipientId: status.recipient_id,
-          status: status.status,
-          timestamp: status.timestamp,
-        },
-        requiresProcessing: false
-      };
-      
-      log('📊 Status update:', status.status, 'for message:', status.id);
-    }
-    
-    // Forward to n8n webhook
-    if (extractedData.requiresProcessing) {
-      await forwardToN8N(extractedData);
-    }
+   
     
   } catch (error) {
     log('Error processing webhook:', error);
@@ -165,11 +113,10 @@ async function forwardToN8N1(data) {
     
     const response = await axios.post(N8N_WEBHOOK_URL, data);
     
-    log('✅ Successfully forwarded to n8n. Response:', response.status);
+    log('✅ Successfully forwarded to n8n. Response:->', response.status);
     
   } catch (error) {
     log('❌ Error forwarding to n8n:', error.message);
-    
     // You could implement retry logic here
     // Or save to a queue for later processing
   }
