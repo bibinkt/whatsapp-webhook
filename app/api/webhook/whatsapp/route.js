@@ -125,23 +125,15 @@ async function forwardToN8N1(data) {
 async function forwardToN8N(data) {
   try {
     log('Forwarding to n8n with fetch:', N8N_WEBHOOK_URL);
-    
     // Use fetch which is native and lighter
-    fetch(N8N_WEBHOOK_URL, {
+   const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data)
-    }).then(response => {
-      log('✅ n8n responded:', response.status);
-    }).catch(err => {
-      log('⚠️ n8n error (non-blocking):', err.message);
     });
-    
-    // Don't wait for the response
-    return;
-    
+    log('✅ Successfully received the message from n8n. Response:->', response.status);
   } catch (error) {
     log('Error in fetch setup:', error.message);
   }
